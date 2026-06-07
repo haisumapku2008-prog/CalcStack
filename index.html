@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalcStack - Advanced Multi-Tier Stack Evaluation Suite</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 2rem 1rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        header { margin-bottom: 2rem; text-align: center; }
+        header h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; color: #f1f5f9; }
+        header p { color: #94a3b8; margin-top: 0.5rem; }
+
+        .container { width: 100%; max-width: 1000px; display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 768px) { .container { grid-template-columns: 3fr 2fr; } }
+
+        .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); height: fit-content; }
+        .card-title { font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Calculator Display Screen Workspace */
+        .display-screen { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: right; min-height: 90px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+        .expression-trace { color: #64748b; font-family: ui-monospace, monospace; font-size: 0.9rem; min-height: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .current-value { color: #38bdf8; font-family: ui-monospace, monospace; font-size: 2rem; font-weight: 700; word-wrap: break-word; overflow: hidden; }
+
+        /* Pad Grid Matrix layout */
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.65rem; }
+        
+        button { padding: 1rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; font-family: ui-monospace, monospace; }
+        .btn-num { background: #334155; color: #f8fafc; }
+        .btn-num:hover { background: #475569; }
+        .btn-op { background: #0284c7; color: white; }
+        .btn-op:hover { background: #0369a1; }
+        .btn-fn { background: #475569; color: #cbd5e1; font-size: 0.95rem; }
+        .btn-fn:hover { background: #64748b; }
+        .btn-clear { background: #b91c1c; color: white; }
+        .btn-clear:hover { background: #991b1b; }
+        .btn-enter { background: #10b981; color: white; grid-column: span 2; }
+        .btn-enter:hover { background: #059669; }
+
+        /* Memory Stack Display Panels */
+        .stack-list { display: flex; flex-direction: column-reverse; gap: 0.4rem; max-height: 320px; overflow-y: auto; background: #020617; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; }
+        .stack-row { display: flex; justify-content: space-between; background: #1e293b; padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 3px solid #38bdf8; font-family: ui-monospace, monospace; font-size: 0.95rem; }
+        .stack-idx { color: #64748b; font-weight: 700; }
+        .stack-val { color: #f1f5f9; font-weight: 600; }
+        
+        .empty-msg { color: #475569; text-align: center; font-style: italic; padding: 1rem 0; font-size: 0.9rem; }
+        
+        .history-log { max-height: 140px; overflow-y: auto; font-size: 0.8rem; color: #94a3b8; font-family: ui-monospace, monospace; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 1rem; }
+        .log-item { border-bottom: 1px solid #1e293b; padding-bottom: 0.2rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CalcStack Engine Suite</h1>
+        <p>A Postfix/RPN stack machine parsing evaluation nodes with instant linear register tracking.</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-title">🧮 Computation Matrix Terminal</div>
+            
+            <div class="display-screen">
+                <div class="expression-trace" id="expressionTrace">Stack Context Ready</div>
+                <div class="current-value" id="primaryDisplay">0</div>
+            </div>
+
+            <div class="calc-grid">
+                <button class="btn-clear" onclick="clearAllRegisters()">AC</button>
+                <button class="btn-fn" onclick="dropStackTop()">DROP</button>
+                <button class="btn-fn" onclick="executeUnaryOp('sin')">sin</button>
+                <button class="btn-fn" onclick="executeUnaryOp('cos')">cos</button>
+
+                <button class="btn-fn" onclick="executeUnaryOp('sqrt')">√</button>
+                <button class="btn-fn" onclick="executeUnaryOp('sqr')">x²</button>
+                <button class="btn-fn" onclick="executeUnaryOp('ln')">ln</button>
+                <button class="btn-op" onclick="executeBinaryOp('/')">/</button>
+
+                <button class="btn-num" onclick="appendInputDigit('7')">7</button>
+                <button class="btn-num" onclick="appendInputDigit('8')">8</button>
+                <button class="btn-num" onclick="appendInputDigit('9')">9</button>
+                <button class="btn-op" onclick="executeBinaryOp('*')">*</button>
+
+                <button class="btn-num" onclick="appendInputDigit('4')">4</button>
+                <button class="btn-num" onclick="appendInputDigit('5')">5</button>
+                <button class="btn-num" onclick="appendInputDigit('6')">6</button>
+                <button class="btn-op" onclick="executeBinaryOp('-')">-</button>
+
+                <button class="btn-num" onclick="appendInputDigit('1')">1</button>
+                <button class="btn-num" onclick="appendInputDigit('2')">2</button>
+                <button class="btn-num" onclick="appendInputDigit('3')">3</button>
+                <button class="btn-op" onclick="executeBinaryOp('+')">+</button>
+
+                <button class="btn-num" onclick="appendInputDigit('0')">0</button>
+                <button class="btn-num" onclick="appendInputDigit('.')">.</button>
+                <button class="btn-enter" onclick="pushCurrentToStack()">ENTER</button>
+            </div>
+        </div>
+
+        <div>
+            <div class="card" style="width: 100%; margin-bottom: 1.5rem;">
+                <div class="card-title">📚 Active Memory Execution Stack</div>
+                <div class="stack-list" id="stackRegisterView">
+                    <div class="empty-msg">Evaluation storage stack is currently empty</div>
+                </div>
+            </div>
+
+            <div class="card" style="width: 100%;">
+                <div class="card-title">📜 Operational Telemetry Audit Log</div>
+                <div class="history-log" id="historyLogPanel">
+                    <div class="log-item" style="color: #64748b;">System operational status initialized...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let calculationStack = [];
+        let currentInputValue = "0";
+        let isFreshInputContext = true;
+
+        const primaryDisplay = document.getElementById('primaryDisplay');
+        const expressionTrace = document.getElementById('expressionTrace');
+        const stackRegisterView = document.getElementById('stackRegisterView');
+        const historyLogPanel = document.getElementById('historyLogPanel');
+
+        function updateUserInterfaceDisplay() {
+            primaryDisplay.innerText = currentInputValue;
+            
+            // Build visual memory layout
+            stackRegisterView.innerHTML = '';
+            if (calculationStack.length === 0) {
+                stackRegisterView.innerHTML = '<div class="empty-msg">Evaluation storage stack is currently empty</div>';
+            } else {
+                calculationStack.forEach((val, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'stack-row';
+                    row.innerHTML = `<span class="stack-idx">[${idx + 1}]</span><span class="stack-val">${val}</span>`;
+                    stackRegisterView.appendChild(row);
+                });
+            }
+        }
+
+        function appendLogMessage(msg) {
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerText = `> ${msg}`;
+            historyLogPanel.appendChild(logItem);
+            historyLogPanel.scrollTop = historyLogPanel.scrollHeight;
+        }
+
+        function appendInputDigit(digit) {
+            if (isFreshInputContext) {
+                if (digit === '.') {
+                    currentInputValue = "0.";
+                } else {
+                    currentInputValue = digit;
+                }
+                isFreshInputContext = false;
+            } else {
+                if (digit === '.' && currentInputValue.includes('.')) return;
+                currentInputValue += digit;
+            }
+            updateUserInterfaceDisplay();
+        }
+
+        function pushCurrentToStack() {
+            const numericValue = parseFloat(currentInputValue);
+            if (!isNaN(numericValue)) {
+                calculationStack.push(numericValue);
+                appendLogMessage(`PUSH: ${numericValue} loaded onto evaluation registry`);
+                expressionTrace.innerText = `Last action: ENTER (${numericValue})`;
+                currentInputValue = "0";
+                isFreshInputContext = true;
+                updateUserInterfaceDisplay();
+            }
+        }
+
+        function executeBinaryOp(operator) {
+            // Auto commit current staging register input field if user hits raw operator instead of double enter
+            if (!isFreshInputContext) {
+                calculationStack.push(parseFloat(currentInputValue));
+                currentInputValue = "0";
+                isFreshInputContext = true;
+            }
+
+            if (calculationStack.length < 2) {
+                expressionTrace.innerText = "Error: Stack depth insufficient (needs 2 items)";
+                appendLogMessage("ABORT: Binary execution framework requested empty registries");
+                return;
+            }
+
+            const operandB = calculationStack.pop();
+            const operandA = calculationStack.pop();
+            let finalResult = 0;
+
+            switch(operator) {
+                case '+': finalResult = operandA + operandB; break;
+                case '-': finalResult = operandA - operandB; break;
+                case '*': finalResult = operandA * operandB; break;
+                case '/': 
+                    if (operandB === 0) {
+                        expressionTrace.innerText = "Error: Zero division ceiling error";
+                        appendLogMessage("CRITICAL: Divide by zero fault prevented safely");
+                        calculationStack.push(operandA);
+                        calculationStack.push(operandB);
+                        updateUserInterfaceDisplay();
+                        return;
+                    }
+                    finalResult = operandA / operandB; 
+                    break;
+            }
+
+            calculationStack.push(finalResult);
+            expressionTrace.innerText = `Evaluated: ${operandA} ${operator} ${operandB} = ${finalResult}`;
+            appendLogMessage(`EXEC: (${operandA} ${operator} ${operandB}) targeting value -> ${finalResult}`);
+            updateUserInterfaceDisplay();
+        }
+
+        function executeUnaryOp(funcType) {
+            if (!isFreshInputContext) {
+                calculationStack.push(parseFloat(currentInputValue));
+                currentInputValue = "0";
+                isFreshInputContext = true;
+            }
+
+            if (calculationStack.length < 1) {
+                expressionTrace.innerText = `Error: Stack empty for function '${funcType}'`;
+                return;
+            }
+
+            const activeNode = calculationStack.pop();
+            let calculationOutput = 0;
+
+            switch(funcType) {
+                case 'sin': calculationOutput = Math.sin(activeNode); break;
+                case 'cos': calculationOutput = Math.cos(activeNode); break;
+                case 'sqrt': 
+                    if (activeNode < 0) {
+                        expressionTrace.innerText = "Error: Imaginary numerical node logic path blocked";
+                        calculationStack.push(activeNode);
+                        return;
+                    }
+                    calculationOutput = Math.sqrt(activeNode); 
+                    break;
+                case 'sqr': calculationOutput = activeNode * activeNode; break;
+                case 'ln': 
+                    if (activeNode <= 0) {
+                        expressionTrace.innerText = "Error: Logarithmic domain violation";
+                        calculationStack.push(activeNode);
+                        return;
+                    }
+                    calculationOutput = Math.log(activeNode); 
+                    break;
+            }
+
+            calculationStack.push(calculationOutput);
+            expressionTrace.innerText = `Evaluated: ${funcType}(${activeNode}) = ${calculationOutput}`;
+            appendLogMessage(`EXEC: ${funcType}(${activeNode}) completed with context -> ${calculationOutput}`);
+            updateUserInterfaceDisplay();
+        }
+
+        function dropStackTop() {
+            if (calculationStack.length > 0) {
+                const removed = calculationStack.pop();
+                appendLogMessage(`DROP: Discarded node value ${removed} from registration root`);
+                expressionTrace.innerText = `Dropped value node: ${removed}`;
+            } else {
+                expressionTrace.innerText = "Stack status clean: Nothing to discard";
+            }
+            updateUserInterfaceDisplay();
+        }
+
+        function clearAllRegisters() {
+            calculationStack = [];
+            currentInputValue = "0";
+            isFreshInputContext = true;
+            expressionTrace.innerText = "System memory flush completed safely";
+            appendLogMessage("RESET: Operational arrays cleared completely");
+            updateUserInterfaceDisplay();
+        }
+
+        updateUserInterfaceDisplay();
+    </script>
+</body>
+</html>
