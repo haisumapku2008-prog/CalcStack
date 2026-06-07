@@ -3,111 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CalcStack - Advanced Multi-Tier Stack Evaluation Suite</title>
+    <title>CalcStack - Professional Dual-Mode Keyboard Machine</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; padding: 2rem 1rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
         
-        header { margin-bottom: 2rem; text-align: center; }
+        header { margin-bottom: 2rem; text-align: center; width: 100%; max-width: 1000px; }
         header h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; color: #f1f5f9; }
         header p { color: #94a3b8; margin-top: 0.5rem; }
 
-        .container { width: 100%; max-width: 1000px; display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-        @media (min-width: 768px) { .container { grid-template-columns: 3fr 2fr; } }
+        .container { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 992px) { .container { grid-template-columns: 13fr 7fr; } }
 
         .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); height: fit-content; }
         .card-title { font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Calculator Display Screen Workspace */
-        .display-screen { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: right; min-height: 90px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
-        .expression-trace { color: #64748b; font-family: ui-monospace, monospace; font-size: 0.9rem; min-height: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .current-value { color: #38bdf8; font-family: ui-monospace, monospace; font-size: 2rem; font-weight: 700; word-wrap: break-word; overflow: hidden; }
+        /* Mode Selector Toggle Switch */
+        .mode-container { display: flex; background: #020617; border-radius: 8px; padding: 0.25rem; gap: 0.25rem; margin-bottom: 1.25rem; border: 1px solid #334155; }
+        .mode-btn { flex: 1; border: none; background: transparent; padding: 0.6rem; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 6px; transition: all 0.2s; text-transform: uppercase; }
+        .mode-btn.active { background: #0284c7; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 
-        /* Pad Grid Matrix layout */
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.65rem; }
+        /* Display Screen Terminal Workspace */
+        .display-screen { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: right; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
+        .expression-trace { color: #64748b; font-family: ui-monospace, monospace; font-size: 0.9rem; min-height: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .current-value { color: #38bdf8; font-family: ui-monospace, monospace; font-size: 2.25rem; font-weight: 700; word-wrap: break-word; overflow: hidden; }
+
+        /* Dynamic Adaptive Keypad Matrix Grid */
+        .calc-grid { display: grid; gap: 0.65rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        button { padding: 1rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; font-family: ui-monospace, monospace; }
+        /* Layout Rule: Basic Mode has 4 columns */
+        .calc-grid.mode-basic { grid-template-columns: repeat(4, 1fr); }
+        /* Layout Rule: Scientific Mode expands instantly into 10 columns */
+        .calc-grid.mode-scientific { grid-template-columns: repeat(10, 1fr); }
+
+        button { padding: 1.1rem 0.5rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; font-family: ui-monospace, monospace; text-align: center; }
+        button:active { transform: scale(0.95); }
+        
         .btn-num { background: #334155; color: #f8fafc; }
         .btn-num:hover { background: #475569; }
-        .btn-op { background: #0284c7; color: white; }
-        .btn-op:hover { background: #0369a1; }
+        .btn-op { background: #ea580c; color: white; }
+        .btn-op:hover { background: #c2410c; }
         .btn-fn { background: #475569; color: #cbd5e1; font-size: 0.95rem; }
         .btn-fn:hover { background: #64748b; }
-        .btn-clear { background: #b91c1c; color: white; }
-        .btn-clear:hover { background: #991b1b; }
-        .btn-enter { background: #10b981; color: white; grid-column: span 2; }
-        .btn-enter:hover { background: #059669; }
+        .btn-clear { background: #991b1b; color: white; }
+        .btn-clear:hover { background: #7f1d1d; }
+        .btn-enter { background: #059669; color: white; }
+        .btn-enter:hover { background: #047857; }
+
+        /* Structural Spanning Rules based on Mode Configurations */
+        .calc-grid.mode-basic .span-basic-2 { grid-column: span 2; }
+        .calc-grid.mode-scientific .span-basic-2 { grid-column: span 1; }
+
+        /* Scientific Cluster Element Isolation Wrapper rule for cleaner presentation toggles */
+        .sci-element { display: none; background: #1e293b; color: #38bdf8; border: 1px solid #334155; }
+        .calc-grid.mode-scientific .sci-element { display: block; }
 
         /* Memory Stack Display Panels */
-        .stack-list { display: flex; flex-direction: column-reverse; gap: 0.4rem; max-height: 320px; overflow-y: auto; background: #020617; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; }
-        .stack-row { display: flex; justify-content: space-between; background: #1e293b; padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 3px solid #38bdf8; font-family: ui-monospace, monospace; font-size: 0.95rem; }
+        .stack-list { display: flex; flex-direction: column-reverse; gap: 0.4rem; max-height: 350px; overflow-y: auto; background: #020617; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; min-height: 180px; }
+        .stack-row { display: flex; justify-content: space-between; background: #1e293b; padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 3px solid #ea580c; font-family: ui-monospace, monospace; font-size: 0.95rem; }
         .stack-idx { color: #64748b; font-weight: 700; }
         .stack-val { color: #f1f5f9; font-weight: 600; }
         
-        .empty-msg { color: #475569; text-align: center; font-style: italic; padding: 1rem 0; font-size: 0.9rem; }
+        .empty-msg { color: #475569; text-align: center; font-style: italic; padding: 2rem 0; font-size: 0.9rem; margin: auto; }
         
-        .history-log { max-height: 140px; overflow-y: auto; font-size: 0.8rem; color: #94a3b8; font-family: ui-monospace, monospace; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 1rem; }
+        .history-log { max-height: 130px; overflow-y: auto; font-size: 0.8rem; color: #94a3b8; font-family: ui-monospace, monospace; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 1rem; }
         .log-item { border-bottom: 1px solid #1e293b; padding-bottom: 0.2rem; }
+        
+        .hint-badge { display: inline-block; background: #334155; color: #94a3b8; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>CalcStack Engine Suite</h1>
-        <p>A Postfix/RPN stack machine parsing evaluation nodes with instant linear register tracking.</p>
+        <h1>CalcStack Matrix Machine</h1>
+        <p>Responsive evaluation engine with keyboard hook interceptors and dynamic layouts.</p>
     </header>
 
     <div class="container">
         <div class="card">
-            <div class="card-title">🧮 Computation Matrix Terminal</div>
-            
+            <div class="mode-container">
+                <button class="mode-btn active" id="btnModeBasic" onclick="setCalculatorMode('basic')">📱 Basic Grid</button>
+                <button class="mode-btn" id="btnModeSci" onclick="setCalculatorMode('scientific')">🔬 Scientific Workspace</button>
+            </div>
+
             <div class="display-screen">
-                <div class="expression-trace" id="expressionTrace">Stack Context Ready</div>
+                <div class="expression-trace" id="expressionTrace">Keyboard Engine Ready & Connected</div>
                 <div class="current-value" id="primaryDisplay">0</div>
             </div>
 
-            <div class="calc-grid">
+            <div class="calc-grid mode-basic" id="calcGridContainer">
+                
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sin')">sin</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cos')">cos</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('tan')">tan</button>
                 <button class="btn-clear" onclick="clearAllRegisters()">AC</button>
                 <button class="btn-fn" onclick="dropStackTop()">DROP</button>
-                <button class="btn-fn" onclick="executeUnaryOp('sin')">sin</button>
-                <button class="btn-fn" onclick="executeUnaryOp('cos')">cos</button>
-
-                <button class="btn-fn" onclick="executeUnaryOp('sqrt')">√</button>
-                <button class="btn-fn" onclick="executeUnaryOp('sqr')">x²</button>
-                <button class="btn-fn" onclick="executeUnaryOp('ln')">ln</button>
+                <button class="btn-fn" onclick="executeUnaryOp('neg')">±</button>
                 <button class="btn-op" onclick="executeBinaryOp('/')">/</button>
 
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('ln')">ln</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('log')">log</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sqr')">x²</button>
                 <button class="btn-num" onclick="appendInputDigit('7')">7</button>
                 <button class="btn-num" onclick="appendInputDigit('8')">8</button>
                 <button class="btn-num" onclick="appendInputDigit('9')">9</button>
                 <button class="btn-op" onclick="executeBinaryOp('*')">*</button>
 
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sqrt')">√x</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cube')">x³</button>
+                <button class="btn-fn sci-element" onclick="executeBinaryOp('pow')">xʸ</button>
                 <button class="btn-num" onclick="appendInputDigit('4')">4</button>
                 <button class="btn-num" onclick="appendInputDigit('5')">5</button>
                 <button class="btn-num" onclick="appendInputDigit('6')">6</button>
                 <button class="btn-op" onclick="executeBinaryOp('-')">-</button>
 
+                <button class="btn-fn sci-element" onclick="appendConstant('pi')">π</button>
+                <button class="btn-fn sci-element" onclick="appendConstant('e')">e</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('abs')">|x|</button>
                 <button class="btn-num" onclick="appendInputDigit('1')">1</button>
                 <button class="btn-num" onclick="appendInputDigit('2')">2</button>
                 <button class="btn-num" onclick="appendInputDigit('3')">3</button>
                 <button class="btn-op" onclick="executeBinaryOp('+')">+</button>
 
-                <button class="btn-num" onclick="appendInputDigit('0')">0</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sin-1')">sin⁻¹</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cos-1')">cos⁻¹</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('factorial')">x!</button>
+                <button class="btn-num span-basic-2" onclick="appendInputDigit('0')">0</button>
                 <button class="btn-num" onclick="appendInputDigit('.')">.</button>
                 <button class="btn-enter" onclick="pushCurrentToStack()">ENTER</button>
+
             </div>
         </div>
 
         <div>
             <div class="card" style="width: 100%; margin-bottom: 1.5rem;">
-                <div class="card-title">📚 Active Memory Execution Stack</div>
+                <div class="card-title">
+                    <span>📚 Evaluation Node Stack</span>
+                    <span class="hint-badge">Press Enter to push numbers</span>
+                </div>
                 <div class="stack-list" id="stackRegisterView">
                     <div class="empty-msg">Evaluation storage stack is currently empty</div>
                 </div>
             </div>
 
             <div class="card" style="width: 100%;">
-                <div class="card-title">📜 Operational Telemetry Audit Log</div>
+                <div class="card-title">⌨️ Keyboard Key Mapping Matrix</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.5; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div>• <strong>0-9 / .</strong> : Number Inputs</div>
+                    <div>• <strong>+  -  * /</strong> : Direct Math Operators</div>
+                    <div>• <strong>Enter</strong> : Push Value to Stack</div>
+                    <div>• <strong>Backspace</strong> : Discard/Drop Entry</div>
+                    <div>• <strong>Escape / c</strong> : AC System Flush</div>
+                    <div>• <strong>s / q</strong> : Sin / Square root function</div>
+                </div>
                 <div class="history-log" id="historyLogPanel">
                     <div class="log-item" style="color: #64748b;">System operational status initialized...</div>
                 </div>
@@ -119,16 +167,31 @@
         let calculationStack = [];
         let currentInputValue = "0";
         let isFreshInputContext = true;
+        let activeInterfaceMode = 'basic';
 
         const primaryDisplay = document.getElementById('primaryDisplay');
         const expressionTrace = document.getElementById('expressionTrace');
         const stackRegisterView = document.getElementById('stackRegisterView');
         const historyLogPanel = document.getElementById('historyLogPanel');
+        const calcGridContainer = document.getElementById('calcGridContainer');
+
+        function setCalculatorMode(mode) {
+            activeInterfaceMode = mode;
+            document.getElementById('btnModeBasic').classList.toggle('active', mode === 'basic');
+            document.getElementById('btnModeSci').classList.toggle('active', mode === 'scientific');
+            
+            if (mode === 'scientific') {
+                calcGridContainer.className = 'calc-grid mode-scientific';
+                appendLogMessage("LAYOUT: Expanded interface into full 10-column Scientific Workstation");
+            } else {
+                calcGridContainer.className = 'calc-grid mode-basic';
+                appendLogMessage("LAYOUT: Shifted interface down to standard 4-column Basic Grid");
+            }
+        }
 
         function updateUserInterfaceDisplay() {
             primaryDisplay.innerText = currentInputValue;
             
-            // Build visual memory layout
             stackRegisterView.innerHTML = '';
             if (calculationStack.length === 0) {
                 stackRegisterView.innerHTML = '<div class="empty-msg">Evaluation storage stack is currently empty</div>';
@@ -136,7 +199,7 @@
                 calculationStack.forEach((val, idx) => {
                     const row = document.createElement('div');
                     row.className = 'stack-row';
-                    row.innerHTML = `<span class="stack-idx">[${idx + 1}]</span><span class="stack-val">${val}</span>`;
+                    row.innerHTML = `<span class="stack-idx">[${idx + 1}]</span><span class="stack-val">${Number(val.toFixed(8))}</span>`;
                     stackRegisterView.appendChild(row);
                 });
             }
@@ -152,11 +215,7 @@
 
         function appendInputDigit(digit) {
             if (isFreshInputContext) {
-                if (digit === '.') {
-                    currentInputValue = "0.";
-                } else {
-                    currentInputValue = digit;
-                }
+                currentInputValue = (digit === '.') ? "0." : digit;
                 isFreshInputContext = false;
             } else {
                 if (digit === '.' && currentInputValue.includes('.')) return;
@@ -165,11 +224,19 @@
             updateUserInterfaceDisplay();
         }
 
+        function appendConstant(constType) {
+            if (constType === 'pi') currentInputValue = Math.PI.toString();
+            if (constType === 'e') currentInputValue = Math.E.toString();
+            isFreshInputContext = false;
+            updateUserInterfaceDisplay();
+            appendLogMessage(`INPUT: Constant value '${constType}' injected into staging register`);
+        }
+
         function pushCurrentToStack() {
             const numericValue = parseFloat(currentInputValue);
             if (!isNaN(numericValue)) {
                 calculationStack.push(numericValue);
-                appendLogMessage(`PUSH: ${numericValue} loaded onto evaluation registry`);
+                appendLogMessage(`PUSH: Committed value ${numericValue} into stack slot [${calculationStack.length}]`);
                 expressionTrace.innerText = `Last action: ENTER (${numericValue})`;
                 currentInputValue = "0";
                 isFreshInputContext = true;
@@ -178,7 +245,6 @@
         }
 
         function executeBinaryOp(operator) {
-            // Auto commit current staging register input field if user hits raw operator instead of double enter
             if (!isFreshInputContext) {
                 calculationStack.push(parseFloat(currentInputValue));
                 currentInputValue = "0";
@@ -186,8 +252,8 @@
             }
 
             if (calculationStack.length < 2) {
-                expressionTrace.innerText = "Error: Stack depth insufficient (needs 2 items)";
-                appendLogMessage("ABORT: Binary execution framework requested empty registries");
+                expressionTrace.innerText = "Error: Insufficient stack parameters";
+                appendLogMessage(`ABORT: Operator '${operator}' requested 2 operands, stack has ${calculationStack.length}`);
                 return;
             }
 
@@ -199,10 +265,11 @@
                 case '+': finalResult = operandA + operandB; break;
                 case '-': finalResult = operandA - operandB; break;
                 case '*': finalResult = operandA * operandB; break;
+                case 'pow': finalResult = Math.pow(operandA, operandB); break;
                 case '/': 
                     if (operandB === 0) {
-                        expressionTrace.innerText = "Error: Zero division ceiling error";
-                        appendLogMessage("CRITICAL: Divide by zero fault prevented safely");
+                        expressionTrace.innerText = "Error: Arithmetic zero exception";
+                        appendLogMessage("CRITICAL: Divide-by-zero calculation trap prevented");
                         calculationStack.push(operandA);
                         calculationStack.push(operandB);
                         updateUserInterfaceDisplay();
@@ -213,8 +280,8 @@
             }
 
             calculationStack.push(finalResult);
-            expressionTrace.innerText = `Evaluated: ${operandA} ${operator} ${operandB} = ${finalResult}`;
-            appendLogMessage(`EXEC: (${operandA} ${operator} ${operandB}) targeting value -> ${finalResult}`);
+            expressionTrace.innerText = `Result: ${finalResult}`;
+            appendLogMessage(`EXEC: Resolved binary expression (${operandA} ${operator} ${operandB}) -> ${finalResult}`);
             updateUserInterfaceDisplay();
         }
 
@@ -226,7 +293,7 @@
             }
 
             if (calculationStack.length < 1) {
-                expressionTrace.innerText = `Error: Stack empty for function '${funcType}'`;
+                expressionTrace.innerText = `Error: Stack empty for command '${funcType}'`;
                 return;
             }
 
@@ -236,38 +303,48 @@
             switch(funcType) {
                 case 'sin': calculationOutput = Math.sin(activeNode); break;
                 case 'cos': calculationOutput = Math.cos(activeNode); break;
+                case 'tan': calculationOutput = Math.tan(activeNode); break;
+                case 'sin-1': calculationOutput = Math.asin(activeNode); break;
+                case 'cos-1': calculationOutput = Math.acos(activeNode); break;
+                case 'abs': calculationOutput = Math.abs(activeNode); break;
+                case 'neg': calculationOutput = activeNode * -1; break;
+                case 'sqr': calculationOutput = activeNode * activeNode; break;
+                case 'cube': calculationOutput = activeNode * activeNode * activeNode; break;
                 case 'sqrt': 
                     if (activeNode < 0) {
-                        expressionTrace.innerText = "Error: Imaginary numerical node logic path blocked";
+                        expressionTrace.innerText = "Error: Complex numbers out of domain scope";
                         calculationStack.push(activeNode);
                         return;
                     }
                     calculationOutput = Math.sqrt(activeNode); 
                     break;
-                case 'sqr': calculationOutput = activeNode * activeNode; break;
-                case 'ln': 
-                    if (activeNode <= 0) {
-                        expressionTrace.innerText = "Error: Logarithmic domain violation";
+                case 'log': calculationOutput = Math.log10(activeNode); break;
+                case 'ln': calculationOutput = Math.log(activeNode); break;
+                case 'factorial':
+                    if (activeNode < 0 || !Number.isInteger(activeNode)) {
+                        expressionTrace.innerText = "Error: Factorial requires positive integers";
                         calculationStack.push(activeNode);
                         return;
                     }
-                    calculationOutput = Math.log(activeNode); 
+                    let fact = 1;
+                    for (let i = 2; i <= activeNode; i++) fact *= i;
+                    calculationOutput = fact;
                     break;
             }
 
             calculationStack.push(calculationOutput);
-            expressionTrace.innerText = `Evaluated: ${funcType}(${activeNode}) = ${calculationOutput}`;
-            appendLogMessage(`EXEC: ${funcType}(${activeNode}) completed with context -> ${calculationOutput}`);
+            expressionTrace.innerText = `Result: ${calculationOutput}`;
+            appendLogMessage(`EXEC: Resolved unary conversion ${funcType}(${activeNode}) -> ${calculationOutput}`);
             updateUserInterfaceDisplay();
         }
 
         function dropStackTop() {
             if (calculationStack.length > 0) {
                 const removed = calculationStack.pop();
-                appendLogMessage(`DROP: Discarded node value ${removed} from registration root`);
-                expressionTrace.innerText = `Dropped value node: ${removed}`;
+                appendLogMessage(`DROP: Cleaned value node ${removed} from registration line`);
+                expressionTrace.innerText = `Dropped entry: ${removed}`;
             } else {
-                expressionTrace.innerText = "Stack status clean: Nothing to discard";
+                expressionTrace.innerText = "Stack status clean: Nothing to pop";
             }
             updateUserInterfaceDisplay();
         }
@@ -276,10 +353,48 @@
             calculationStack = [];
             currentInputValue = "0";
             isFreshInputContext = true;
-            expressionTrace.innerText = "System memory flush completed safely";
-            appendLogMessage("RESET: Operational arrays cleared completely");
+            expressionTrace.innerText = "All memory registers cleared successfully";
+            appendLogMessage("RESET: Memory register state initialized to zero");
             updateUserInterfaceDisplay();
         }
+
+        /* [1] INTEGRATED FULL HARDWARE KEYBOARD EVENT HOOK INTERCEPTORS */
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            // Intercept Number and Dot entry nodes
+            if (!isNaN(key) && key !== ' ') {
+                event.preventDefault();
+                appendInputDigit(key);
+            } else if (key === '.') {
+                event.preventDefault();
+                appendInputDigit('.');
+            }
+            // Intercept Basic Evaluation Operators
+            else if (key === '+') { event.preventDefault(); executeBinaryOp('+'); }
+            else if (key === '-') { event.preventDefault(); executeBinaryOp('-'); }
+            else if (key === '*') { event.preventDefault(); executeBinaryOp('*'); }
+            else if (key === '/') { event.preventDefault(); executeBinaryOp('/'); }
+            // Intercept Registry Command Actions
+            else if (key === 'Enter') {
+                event.preventDefault();
+                pushCurrentToStack();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                dropStackTop();
+            } else if (key === 'Escape' || key.toLowerCase() === 'c') {
+                event.preventDefault();
+                clearAllRegisters();
+            }
+            // Scientific character quick key shortcuts maps
+            else if (key.toLowerCase() === 's') {
+                event.preventDefault();
+                executeUnaryOp('sin');
+            } else if (key.toLowerCase() === 'q') {
+                event.preventDefault();
+                executeUnaryOp('sqrt');
+            }
+        });
 
         updateUserInterfaceDisplay();
     </script>
