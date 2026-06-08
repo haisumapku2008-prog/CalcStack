@@ -3,51 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CalcStack - Professional Scientific Calculator</title>
+    <title>CalcStack - Traditional Standard Calculator Suite</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; padding: 2rem 1rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        header { margin-bottom: 2rem; text-align: center; width: 100%; max-width: 1000px; }
+        header h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; color: #f1f5f9; }
+        header p { color: #94a3b8; margin-top: 0.5rem; }
+
         .container { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
         @media (min-width: 992px) { .container { grid-template-columns: 13fr 7fr; } }
-        .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; }
+
+        .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); height: fit-content; }
+        .card-title { font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+
+        .mode-container { display: flex; background: #020617; border-radius: 8px; padding: 0.25rem; gap: 0.25rem; margin-bottom: 1.25rem; border: 1px solid #334155; }
+        .mode-btn { flex: 1; border: none; background: transparent; padding: 0.6rem; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 6px; transition: all 0.2s; text-transform: uppercase; }
+        .mode-btn.active { background: #0284c7; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+        .display-screen { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: right; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
+        .expression-trace { color: #64748b; font-family: ui-monospace, monospace; font-size: 0.9rem; min-height: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .current-value { color: #38bdf8; font-family: ui-monospace, monospace; font-size: 2.25rem; font-weight: 700; word-wrap: break-word; overflow: hidden; }
+
         .calc-grid { display: grid; gap: 0.65rem; transition: all 0.3s ease; }
-        .mode-basic { grid-template-columns: repeat(4, 1fr); }
-        .mode-scientific { grid-template-columns: repeat(5, 1fr); }
-        button { padding: 1.1rem 0.5rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; }
+        .calc-grid.mode-basic { grid-template-columns: repeat(4, 1fr); }
+        .calc-grid.mode-scientific { grid-template-columns: repeat(10, 1fr); }
+
+        button { padding: 1.1rem 0.5rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; font-family: ui-monospace, monospace; text-align: center; }
+        button:active { transform: scale(0.95); }
+        
+        .btn-num { background: #334155; color: #f8fafc; }
+        .btn-num:hover { background: #475569; }
+        .btn-op { background: #ea580c; color: white; }
+        .btn-op:hover { background: #c2410c; }
+        .btn-fn { background: #475569; color: #cbd5e1; font-size: 0.95rem; }
+        .btn-fn:hover { background: #64748b; }
+        .btn-clear { background: #991b1b; color: white; }
+        .btn-clear:hover { background: #7f1d1d; }
+        .btn-equal { background: #059669; color: white; }
+        .btn-equal:hover { background: #047857; }
+
+        .calc-grid.mode-basic .span-basic-2 { grid-column: span 2; }
+        .calc-grid.mode-scientific .span-basic-2 { grid-column: span 1; }
+
         .sci-element { display: none; }
-        .mode-scientific .sci-element { display: block; }
-        .display-screen { background: #020617; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: right; }
-        .current-value { color: #38bdf8; font-size: 2.25rem; font-weight: 700; }
+        .calc-grid.mode-scientific .sci-element { display: block; }
+
+        .history-log { max-height: 250px; overflow-y: auto; font-size: 0.85rem; color: #94a3b8; font-family: ui-monospace, monospace; display: flex; flex-direction: column; gap: 0.4rem; background: #020617; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; min-height: 180px; }
+        .log-item { border-bottom: 1px solid #1e293b; padding-bottom: 0.3rem; display: flex; justify-content: space-between; }
+        .log-expr { color: #94a3b8; }
+        .log-res { color: #38bdf8; font-weight: 700; }
+        
+        .empty-msg { color: #475569; text-align: center; font-style: italic; padding: 2rem 0; margin: auto; }
+        .hint-badge { display: inline-block; background: #334155; color: #94a3b8; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500; }
     </style>
 </head>
 <body>
+
+    <header>
+        <h1>CalcStack Standard Suite</h1>
+        <p>A traditional inline operator calculator with dynamic keyboard event routing.</p>
+    </header>
+
     <div class="container">
         <div class="card">
+            <div class="mode-container">
+                <button class="mode-btn active" id="btnModeBasic" onclick="setCalculatorMode('basic')">📱 Basic Grid</button>
+                <button class="mode-btn" id="btnModeSci" onclick="setCalculatorMode('scientific')">🔬 Scientific Workspace</button>
+            </div>
+
             <div class="display-screen">
+                <div class="expression-trace" id="expressionTrace">Standard Inline Parsing Active</div>
                 <div class="current-value" id="primaryDisplay">0</div>
             </div>
+
             <div class="calc-grid mode-basic" id="calcGridContainer">
-                <button onclick="updateDisplay('7')">7</button>
-                <button onclick="updateDisplay('8')">8</button>
-                <button onclick="updateDisplay('=')">=</button>
-                <button class="btn-clear" onclick="engine.reset()">AC</button>
+                
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sin')">sin</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cos')">cos</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('tan')">tan</button>
+                <button class="btn-clear" onclick="clearAllRegisters()">AC</button>
+                <button class="btn-fn" onclick="backspaceInputDigit()">⌫</button>
+                <button class="btn-fn" onclick="executeUnaryOp('neg')">±</button>
+                <button class="btn-op" onclick="setBinaryOperator('/')">/</button>
+
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('ln')">ln</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('log')">log</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sqr')">x²</button>
+                <button class="btn-num" onclick="appendInputDigit('7')">7</button>
+                <button class="btn-num" onclick="appendInputDigit('8')">8</button>
+                <button class="btn-num" onclick="appendInputDigit('9')">9</button>
+                <button class="btn-op" onclick="setBinaryOperator('*')">*</button>
+
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sqrt')">√x</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cube')">x³</button>
+                <button class="btn-fn sci-element" onclick="setBinaryOperator('pow')">xʸ</button>
+                <button class="btn-num" onclick="appendInputDigit('4')">4</button>
+                <button class="btn-num" onclick="appendInputDigit('5')">5</button>
+                <button class="btn-num" onclick="appendInputDigit('6')">6</button>
+                <button class="btn-op" onclick="setBinaryOperator('-')">-</button>
+
+                <button class="btn-fn sci-element" onclick="appendConstant('pi')">π</button>
+                <button class="btn-fn sci-element" onclick="appendConstant('e')">e</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('abs')">|x|</button>
+                <button class="btn-num" onclick="appendInputDigit('1')">1</button>
+                <button class="btn-num" onclick="appendInputDigit('2')">2</button>
+                <button class="btn-num" onclick="appendInputDigit('3')">3</button>
+                <button class="btn-op" onclick="setBinaryOperator('+')">+</button>
+
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('sin-1')">sin⁻¹</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('cos-1')">cos⁻¹</button>
+                <button class="btn-fn sci-element" onclick="executeUnaryOp('factorial')">x!</button>
+                <button class="btn-num span-basic-2" onclick="appendInputDigit('0')">0</button>
+                <button class="btn-num" onclick="appendInputDigit('.')">.</button>
+                <button class="btn-equal" onclick="executeEvaluationSequence()">=</button>
+
+            </div>
+        </div>
+
+        <div>
+            <div class="card" style="width: 100%;">
+                <div class="card-title">
+                    <span>📜 Continuous Operational Audit Log</span>
+                    <span class="hint-badge">Supports Hardware Keyboard Inputs</span>
+                </div>
+                <div class="history-log" id="historyLogPanel">
+                    <div class="empty-msg">No computations recorded yet</div>
+                </div>
             </div>
         </div>
     </div>
+
     <script>
-        class CalcStackEngine {
-            constructor() {
-                this.display = "0";
-                this.history = [];
+        let currentDisplayValue = "0";
+        let storedAccumulatorValue = null;
+        let activePendingOperator = null;
+        let shouldResetDisplayOnNextKey = false;
+        let activeInterfaceMode = 'basic';
+
+        const primaryDisplay = document.getElementById('primaryDisplay');
+        const expressionTrace = document.getElementById('expressionTrace');
+        const historyLogPanel = document.getElementById('historyLogPanel');
+        const calcGridContainer = document.getElementById('calcGridContainer');
+
+        function setCalculatorMode(mode) {
+            activeInterfaceMode = mode;
+            document.getElementById('btnModeBasic').classList.toggle('active', mode === 'basic');
+            document.getElementById('btnModeSci').classList.toggle('active', mode === 'scientific');
+            calcGridContainer.className = (mode === 'scientific') ? 'calc-grid mode-scientific' : 'calc-grid mode-basic';
+        }
+
+        function appendLogEntry(expression, result) {
+            const emptyMsg = historyLogPanel.querySelector('.empty-msg');
+            if (emptyMsg) emptyMsg.remove();
+
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerHTML = `<span class="log-expr">${expression} =</span><span class="log-res">${result}</span>`;
+            historyLogPanel.insertBefore(item, historyLogPanel.firstChild);
+        }
+
+        function appendInputDigit(digit) {
+            if (shouldResetDisplayOnNextKey) {
+                currentDisplayValue = (digit === '.') ? "0." : digit;
+                shouldResetDisplayOnNextKey = false;
+            } else {
+                if (currentDisplayValue === "0" && digit !== '.') {
+                    currentDisplayValue = digit;
+                } else {
+                    if (digit === '.' && currentDisplayValue.includes('.')) return;
+                    currentDisplayValue += digit;
+                }
             }
-            reset() { this.display = "0"; }
-            update(val) { this.display = val; }
+            primaryDisplay.innerText = currentDisplayValue;
         }
-        const engine = new CalcStackEngine();
-        function updateDisplay(val) {
-            engine.update(val);
-            document.getElementById('primaryDisplay').innerText = engine.display;
+
+        function backspaceInputDigit() {
+            if (shouldResetDisplayOnNextKey) return;
+            currentDisplayValue = currentDisplayValue.slice(0, -1);
+            if (currentDisplayValue === "" || currentDisplayValue === "-") currentDisplayValue = "0";
+            primaryDisplay.innerText = currentDisplayValue;
         }
+
+        function appendConstant(type) {
+            currentDisplayValue = (type === 'pi' ? Math.PI : Math.E).toString();
+            shouldResetDisplayOnNextKey = false;
+            primaryDisplay.innerText = currentDisplayValue;
+        }
+
+        function setBinaryOperator(operator) {
+            const currentNum = parseFloat(currentDisplayValue);
+            
+            if (activePendingOperator && !shouldResetDisplayOnNextKey) {
+                executeIntermediateCalculation();
+            } else {
+                storedAccumulatorValue = currentNum;
+            }
+            
+            activePendingOperator = operator;
+            shouldResetDisplayOnNextKey = true;
+            expressionTrace.innerText = `${storedAccumulatorValue} ${operator}`;
+        }
+
+        function executeIntermediateCalculation() {
+            if (storedAccumulatorValue === null || !activePendingOperator) return;
+            const currentNum = parseFloat(currentDisplayValue);
+            let interimResult = 0;
+
+            switch (activePendingOperator) {
+                case '+': interimResult = storedAccumulatorValue + currentNum; break;
+                case '-': interimResult = storedAccumulatorValue - currentNum; break;
+                case '*': interimResult = storedAccumulatorValue * currentNum; break;
+                case 'pow': interimResult = Math.pow(storedAccumulatorValue, currentNum); break;
+                case '/': 
+                    if (currentNum === 0) {
+                        handleErrorAlert("Zero Error");
+                        return;
+                    }
+                    interimResult = storedAccumulatorValue / currentNum; 
+                    break;
+            }
+
+            storedAccumulatorValue = interimResult;
+            currentDisplayValue = Number(interimResult.toFixed(8)).toString();
+            primaryDisplay.innerText = currentDisplayValue;
+        }
+
+        function executeEvaluationSequence() {
+            if (storedAccumulatorValue === null || !activePendingOperator) return;
+            
+            const currentNum = parseFloat(currentDisplayValue);
+            const formalExpressionString = `${storedAccumulatorValue} ${activePendingOperator} ${currentNum}`;
+            let finalOutputValue = 0;
+
+            switch (activePendingOperator) {
+                case '+': finalOutputValue = storedAccumulatorValue + currentNum; break;
+                case '-': finalOutputValue = storedAccumulatorValue - currentNum; break;
+                case '*': finalOutputValue = storedAccumulatorValue * currentNum; break;
+                case 'pow': finalOutputValue = Math.pow(storedAccumulatorValue, currentNum); break;
+                case '/': 
+                    if (currentNum === 0) {
+                        handleErrorAlert("Zero Division Exception");
+                        return;
+                    }
+                    finalOutputValue = storedAccumulatorValue / currentNum; 
+                    break;
+            }
+
+            currentDisplayValue = Number(finalOutputValue.toFixed(8)).toString();
+            primaryDisplay.innerText = currentDisplayValue;
+            expressionTrace.innerText = `${formalExpressionString} =`;
+            
+            appendLogEntry(formalExpressionString, currentDisplayValue);
+
+            storedAccumulatorValue = null;
+            activePendingOperator = null;
+            shouldResetDisplayOnNextKey = true;
+        }
+
+        function executeUnaryOp(type) {
+            let value = parseFloat(currentDisplayValue);
+            let label = `${type}(${value})`;
+            
+            switch (type) {
+                case 'neg': value = -value; label = `neg(${currentDisplayValue})`; break;
+                case 'sin': value = Math.sin(value); break;
+                case 'cos': value = Math.cos(value); break;
+                case 'tan': value = Math.tan(value); break;
+                case 'sin-1': value = Math.asin(value); break;
+                case 'cos-1': value = Math.acos(value); break;
+                case 'abs': value = Math.abs(value); break;
+                case 'sqr': value = value * value; label = `${currentDisplayValue}²`; break;
+                case 'cube': value = value * value * value; label = `${currentDisplayValue}³`; break;
+                case 'sqrt': 
+                    if (value < 0) { handleErrorAlert("Imaginary Value Error"); return; }
+                    value = Math.sqrt(value); 
+                    label = `√(${currentDisplayValue})`;
+                    break;
+                case 'log': value = Math.log10(value); break;
+                case 'ln': value = Math.log(value); break;
+                case 'factorial':
+                    if (value < 0 || !Number.isInteger(value)) { handleErrorAlert("Domain Error"); return; }
+                    let fact = 1;
+                    for (let i = 2; i <= value; i++) fact *= i;
+                    value = fact;
+                    label = `${currentDisplayValue}!`;
+                    break;
+            }
+
+            currentDisplayValue = Number(value.toFixed(8)).toString();
+            primaryDisplay.innerText = currentDisplayValue;
+            expressionTrace.innerText = `${label} =`;
+            appendLogEntry(label.replace('=', ''), currentDisplayValue);
+            shouldResetDisplayOnNextKey = true;
+        }
+
+        function handleErrorAlert(msg) {
+            primaryDisplay.innerText = "Error";
+            expressionTrace.innerText = msg;
+            currentDisplayValue = "0";
+            storedAccumulatorValue = null;
+            activePendingOperator = null;
+            shouldResetDisplayOnNextKey = true;
+        }
+
+        function clearAllRegisters() {
+            currentDisplayValue = "0";
+            storedAccumulatorValue = null;
+            activePendingOperator = null;
+            shouldResetDisplayOnNextKey = false;
+            primaryDisplay.innerText = "0";
+            expressionTrace.innerText = "Standard Inline Parsing Active";
+        }
+
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (!isNaN(key) && key !== ' ') {
+                event.preventDefault();
+                appendInputDigit(key);
+            } else if (key === '.') {
+                event.preventDefault();
+                appendInputDigit('.');
+            } else if (key === '+') { event.preventDefault(); setBinaryOperator('+'); }
+            else if (key === '-') { event.preventDefault(); setBinaryOperator('-'); }
+            else if (key === '*') { event.preventDefault(); setBinaryOperator('*'); }
+            else if (key === '/') { event.preventDefault(); setBinaryOperator('/'); }
+            else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                executeEvaluationSequence();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                backspaceInputDigit();
+            } else if (key === 'Escape' || key.toLowerCase() === 'c') {
+                event.preventDefault();
+                clearAllRegisters();
+            }
+        });
     </script>
 </body>
 </html>
